@@ -4,40 +4,42 @@ using UnityEngine;
 
 public class TankControler : MonoBehaviour
 {
-   public float moveSpeed = 5f;
-    public float rotateSpeed = 10f;
+   [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float rotateSpeed = 80f;
 
-    private AudioSource engineSound;
+    public AudioSource engineSound;
 
-    void Start()
-    {
-        engineSound = GetComponent<AudioSource>();
-    }
+    
 
     void Update()
     {
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
+        float move = Input.GetAxis("Vertical");
+        float rotate = Input.GetAxis("Horizontal");
 
-        Vector3 direction = new Vector3(h, 0, v).normalized;
+        // حرکت جلو و عقب
+        transform.Translate(
+            Vector3.right * move * moveSpeed * Time.deltaTime,
+            Space.Self
+        );
 
-        // کنترل صدا
-        if (direction.magnitude > 0.1f)
+        // چرخش تانک
+        transform.Rotate(
+            Vector3.forward * rotate * rotateSpeed * Time.deltaTime,
+            Space.Self
+        );
+
+        // کنترل صدای موتور
+        bool isMoving =
+            Mathf.Abs(move) > 0.1f ||
+            Mathf.Abs(rotate) > 0.1f;
+
+        if (isMoving)
         {
             if (!engineSound.isPlaying)
             {
                 engineSound.Play();
             }
-
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                targetRotation,
-                rotateSpeed * Time.deltaTime
-            );
-
-            transform.position += direction * moveSpeed * Time.deltaTime;
         }
         else
         {
@@ -46,5 +48,23 @@ public class TankControler : MonoBehaviour
                 engineSound.Stop();
             }
         }
+    }
+    public GameObject winPanel;
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("ganj"))
+        {
+            WinGame();
+        }
+    }
+
+    void WinGame()
+    {
+        gamestate.isPlaying = false;
+
+        winPanel.SetActive(true);
+
+        Debug.Log("YOU WIN!");
     }
 }
